@@ -30,7 +30,7 @@ zjzmodelpow::expected_options()
 
   options.doc() = "F=h*sign(A)*abs(A)^l,h and l are parameters, A is input scalar";
 
-  options.set<bool>("define_second_derivatives") = false;
+  options.set<bool>("define_second_derivatives") = true;
 
 
   return options;
@@ -62,16 +62,20 @@ zjzmodelpow::set_value(bool out, bool dout_din, bool d2out_din2)
 
   if (dout_din)
   {
-
-    auto dF_dA = _h * _l * pow(pow(_A,2.0),_l/2.0-0.5);
-  
-    _F.d(_A) = dF_dA;//simplified for l>0
+    if (_A.is_dependent())
+    {
+      auto dF_dA = _h * _l * pow(pow(_A,2.0),_l/2.0-0.5);//safe when l>1
+      _F.d(_A) = dF_dA;//simplified for l>0
+    }
 
     if (const auto * const h = nl_param("h"))
       _F.d(*h) = A_pow * A_sign;
 
     if (const auto * const l = nl_param("l"))
-      _F.d(*l) = F*log(A_abs);
+      _F.d(*l) = F*log(A_abs);//A=0?
   }
+  if (d2out_din2)
+    if (_A.is_dependent())
+      _F.d(_A, _A) = _h*_l*_A *pow(pow(_A,2.0)+1e-20,_l/2.0-1.5)*(_l-1.0);//some repeated calculations, to be simplified. add 1e-20 to avoid pow(0, negative)
 }
 } // namespace neml2

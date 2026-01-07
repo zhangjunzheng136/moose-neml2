@@ -49,7 +49,7 @@
 []
 
 [NEML2]
-  input = 'last.i'
+  input = 'neml2_input.i'
   async_dispatch = true
   #scheduler = 'simple_scheduler'
   device = 'cpu'
